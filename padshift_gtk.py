@@ -37,7 +37,7 @@ except Exception as _tray_exc:  # pragma: no cover - the tray is optional
     padshift_tray = None
     print(f"PadShift tray icon unavailable: {_tray_exc}", file=sys.stderr)
 
-APP_VERSION = "0.12.0"
+APP_VERSION = "0.12.1"
 APP_ID = "io.github.privacyfreak84.PadShift"
 ANIMATION_MODES = ("system", "on", "off")
 ANIMATION_LABELS = ["Follow system", "Always on", "Off"]

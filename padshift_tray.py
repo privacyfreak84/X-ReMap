@@ -138,8 +138,8 @@ class TrayIcon:
         self.icon_name = icon_name
         self._on_show = on_show
         self._on_quit = on_quit
-        self.bus_name = f"org.kde.StatusNotifierItem-{os.getpid()}-1"
-        self.status = "Passive"
+        self.bus_name = f"org.freedesktop.StatusNotifierItem-{os.getpid()}-1"
+        self.status = "Active"
         self.status_text = ""
         self.registered = False  # True once a StatusNotifierWatcher accepted the item
         self._revision = 1
@@ -203,9 +203,14 @@ class TrayIcon:
                 setattr(self, attr, 0)
 
     # --- state pushed in by the application ---------------------------------
-    def set_window_visible(self, visible):
-        """Show the icon prominently only while the main window is hidden."""
-        status = "Passive" if visible else "Active"
+    def set_window_visible(self, _visible):
+        """Keep the tray item visible while background mode is enabled.
+
+        A Passive StatusNotifierItem is commonly tucked into Plasma's overflow
+        area. Keep it Active even while the main window is open so the tray
+        entry remains discoverable and the Show/Quit menu is always available.
+        """
+        status = "Active"
         if status == self.status:
             return
         self.status = status

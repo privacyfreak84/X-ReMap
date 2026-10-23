@@ -78,18 +78,13 @@ def client():
         check(prop("IconName") == "example-icon", "IconName")
         check(prop("Menu") == tray.MENU_PATH, "Menu path")
         check(prop("ItemIsMenu") is False, "ItemIsMenu")
-        check(prop("Status") == "Passive", "default status should be Passive (window visible)")
+        check(prop("Status") == "Active", "tray icon should be Active while the window is visible")
 
-        # Hiding the window must make the icon Active; showing it makes it Passive again.
-        statuses = []
-        sub = bus.signal_subscribe(icon.bus_name, tray.ITEM_IFACE, "NewStatus", tray.ITEM_PATH, None,
-                                   Gio.DBusSignalFlags.NONE, lambda *a: statuses.append(a[-1].unpack()[0]))
+        # The item must remain visible in the tray both before and after hiding.
         GLib.idle_add(icon.set_window_visible, False)
         check(wait(lambda: prop("Status") == "Active"), "status not Active after hide")
-        check(wait(lambda: statuses == ["Active"]), f"NewStatus signal missing: {statuses}")
         GLib.idle_add(icon.set_window_visible, True)
-        check(wait(lambda: prop("Status") == "Passive"), "status not Passive after show")
-        bus.signal_unsubscribe(sub)
+        check(wait(lambda: prop("Status") == "Active"), "status not Active after show")
 
         # Menu layout, as Plasma requests it.
         reply = call(tray.MENU_PATH, tray.MENU_IFACE, "GetLayout",
