@@ -32,11 +32,11 @@ jobs:
 
       - name: Validate shell syntax
         run: |
-          bash -n install.sh uninstall.sh apply-padshift-fixes.sh apply-test-fix.sh apply-tray-and-animations.sh
+          bash -n install.sh uninstall.sh
 
       - name: Check shell errors
         run: |
-          shellcheck -S error install.sh uninstall.sh apply-padshift-fixes.sh apply-test-fix.sh apply-tray-and-animations.sh
+          shellcheck -S error install.sh uninstall.sh
 
       - name: Validate SVG assets
         run: |

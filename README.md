@@ -115,7 +115,7 @@ python3 -m py_compile padshift_gtk.py padshift_tray.py padshift.py
 bash -n install.sh uninstall.sh
 ```
 
-**Validation note:** the 0.12.1 source is checked by the GitHub Actions repository audit, which compiles all Python files, checks shell syntax and high-severity ShellCheck findings, validates the SVG assets, and runs the automated suite (72 tests, including tray protocol and GTK application lifecycle tests under a private D-Bus session and Xvfb). The GTK UI still requires a live Fedora/GTK4/libadwaita check. The headless GUI check has no physical controller, no `/dev/uinput`, and no Fedora/KDE/GNOME session, so remapping, input learning, and the tray icon on a real Plasma or GNOME panel still require a desktop check. Follow the checklist in `DESIGN-HIG.md` before describing the interface as fully accessibility-verified.
+**Validation note:** the 0.12.1 source is checked by the GitHub Actions repository audit, which compiles all Python files, checks shell syntax and high-severity ShellCheck findings, validates the generated desktop launcher and SVG assets, and runs the automated suite (72 tests, including tray protocol and GTK application lifecycle tests under a private D-Bus session and Xvfb). The GTK UI still requires a live Fedora/GTK4/libadwaita check. The headless GUI check has no physical controller, no `/dev/uinput`, and no Fedora/KDE/GNOME session, so remapping, input learning, and the tray icon on a real Plasma or GNOME panel still require a desktop check. Follow the checklist in `DESIGN-HIG.md` before describing the interface as fully accessibility-verified.
 
 ## Uninstall
 
