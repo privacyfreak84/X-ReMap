@@ -1,0 +1,59 @@
+name: Repository audit
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install runtime and validation tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            dbus-x11 desktop-file-utils \
+            gir1.2-adw-1 gir1.2-gtk-4.0 \
+            python3-cairo python3-evdev python3-gi python3-tk \
+            shellcheck xvfb
+
+      - name: Compile every Python file
+        run: |
+          find . -type f -name '*.py' -not -path './.git/*' -print0 \
+            | xargs -0 -r /usr/bin/python3 -m py_compile
+
+      - name: Validate shell syntax
+        run: |
+          bash -n install.sh uninstall.sh apply-padshift-fixes.sh apply-test-fix.sh apply-tray-and-animations.sh
+
+      - name: Check shell errors
+        run: |
+          shellcheck -S error install.sh uninstall.sh apply-padshift-fixes.sh apply-test-fix.sh apply-tray-and-animations.sh
+
+      - name: Validate SVG assets
+        run: |
+          /usr/bin/python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+
+          files = sorted(Path("icons").rglob("*.svg"))
+          if not files:
+              raise SystemExit("No SVG assets found")
+          for path in files:
+              ET.parse(path)
+              print(f"OK {path}")
+          PY
+
+      - name: Run automated test suite
+        env:
+          GTK_A11Y: none
+          GSK_RENDERER: cairo
+        run: /usr/bin/python3 -m unittest discover -s tests -v
