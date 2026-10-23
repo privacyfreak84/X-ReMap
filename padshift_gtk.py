@@ -717,7 +717,7 @@ class PadShiftGtkApp(Adw.Application):
             "<li>Controller canvas layout now reserves enough height to remain visible in the adaptive editor.</li>"
             "<li>Controller highlight rings animate on hover/selection and gently pulse while learning an input.</li>"
             "<li>Closing the main window can leave remapping running in the background; use Quit to stop it.</li>"
-            "<li>Custom mappings expand and collapse with a native GTK revealer transition.</li>
+            "<li>Custom mappings expand and collapse with a native GTK revealer transition.</li>"
             "<li>Animations can follow the desktop, be explicitly enabled, or be disabled in Preferences.</li>"
             "<li>Dialog presentation uses native libadwaita transitions rather than a second opacity layer.</li>"
             "</ul>"

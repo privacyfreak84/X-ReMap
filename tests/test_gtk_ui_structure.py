@@ -133,7 +133,7 @@ class GtkUiStructureTests(unittest.TestCase):
 
     def test_docs_disclose_hig_and_accessibility_validation_scope(self):
         self.assertIn("official GNOME Human Interface Guidelines", README_SOURCE)
-        self.assertIn("not been launched or checked with Orca/GTK Inspector", README_SOURCE)
+        self.assertIn("still requires a live Fedora/GTK4/libadwaita check", README_SOURCE)
         self.assertTrue((ROOT / "DESIGN-HIG.md").exists())
 
 

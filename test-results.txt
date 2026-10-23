@@ -16,5 +16,24 @@ Archive validation:
 Runtime limitation:
   This build container does not have PyGObject/GTK4/libadwaita available, so the GTK GUI could not be launched here. No claim is made that the final interface was visually re-tested in this environment. Perform a real desktop check on Fedora for controller artwork, About dialog, animation preferences, reduced motion, and window-size behaviour.
 
+----------------------------------------------------------------------
+PadShift 0.12.0 validation
 
-Note: The 67-test result above is the pre-0.12.0 baseline from the supplied archive. The adaptive/background changes add a static regression test and require a fresh test run on Fedora. No new runtime-test result is claimed by this file.
+Automated tests:
+  python3 -m unittest discover -s tests -v
+  Result: 68 tests passed
+
+Static validation:
+  python3 -m py_compile padshift_gtk.py padshift.py
+  Result: passed
+  bash -n install.sh uninstall.sh
+  Result: passed
+
+Launch smoke test:
+  xvfb-run python3 padshift_gtk.py (Ubuntu 24.04, GTK 4, libadwaita 1.5, python-evdev, tkinter)
+  Result: window built, profile loaded, app kept running until stopped.
+
+Limitations:
+  No physical controller, no /dev/uinput and no Fedora/KDE/GNOME session were available.
+  Remapping, input learning and the visual layout were not exercised. A real
+  desktop check on Fedora is still required.
