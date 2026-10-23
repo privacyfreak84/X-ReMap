@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Check out source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install runtime and validation tools
         run: |
@@ -51,6 +51,19 @@ jobs:
               ET.parse(path)
               print(f"OK {path}")
           PY
+
+      - name: Validate desktop launcher template
+        run: |
+          set -euo pipefail
+          desktop_file="$(mktemp --suffix=.desktop)"
+          trap 'rm -f "$desktop_file"' EXIT
+          sed -n '/^cat > "\$DESKTOP_FILE" <<DESKTOP$/,/^DESKTOP$/p' install.sh | sed '1d;$d' > "$desktop_file"
+          test -s "$desktop_file"
+          sed -i \
+            -e 's|\$BIN_DIR|/home/padshift/.local/bin|g' \
+            -e 's|\$APP_ID|io.github.privacyfreak84.PadShift|g' \
+            "$desktop_file"
+          desktop-file-validate "$desktop_file"
 
       - name: Run automated test suite
         env:
