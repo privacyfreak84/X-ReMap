@@ -96,7 +96,7 @@ def drive():
         item = registered[0]
         check(app.current_device is None and app.worker is None, "test must not touch real controllers")
         check(wait(lambda: app.tray is not None and app.tray.registered), "app tray not registered")
-        check(item_prop("Status") == "Passive", "icon should be Passive while the window is visible")
+        check(item_prop("Status") == "Active", "icon should be Active while the window is visible")
         check(item_prop("IconName") == padshift_gtk.APP_ID, "tray icon name should be the app id")
 
         # 1. Closing the window hides it, keeps the app alive, and the icon becomes Active.
@@ -111,7 +111,7 @@ def drive():
         bus.call_sync(item, tray.ITEM_PATH, tray.ITEM_IFACE, "Activate", GLib.Variant("(ii)", (0, 0)),
                       None, Gio.DBusCallFlags.NONE, 3000, None)
         check(wait(lambda: on_main(lambda: app.window.get_visible()) is True), "tray click did not show the window")
-        check(wait(lambda: item_prop("Status") == "Passive"), "icon not Passive after the window re-opened")
+        check(wait(lambda: item_prop("Status") == "Active"), "icon not Active after the window re-opened")
 
         # 3. Hide again, then Quit from the tray menu while the window is hidden.
         on_main(lambda: app.window.close())
