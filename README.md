@@ -37,7 +37,7 @@ The interface uses standard GTK4 and libadwaita widgets instead of a custom CSS 
 
 ## Install on Fedora
 
-Extract the archive, open a terminal in the `padshift` folder and run:
+From the repository root (or the root of GitHub's **Download ZIP**), open a terminal and run:
 
 ```bash
 ./install.sh
