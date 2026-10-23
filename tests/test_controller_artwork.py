@@ -109,8 +109,11 @@ class ControllerArtworkTests(unittest.TestCase):
         self.assertIn("GTK's motion preference", README)
 
     def test_version_docs_and_asset_notes_are_updated(self):
-        self.assertIn('APP_VERSION = "0.12.0"', UI)
-        self.assertTrue(README.startswith("# PadShift 0.12.0"))
+        version_line = next(
+            line for line in UI.splitlines() if line.startswith("APP_VERSION = ")
+        )
+        version = version_line.split('"')[1]
+        self.assertTrue(README.startswith(f"# PadShift {version}"))
         self.assertIn("transparent, high-detail Xbox One-style product illustration", README)
         self.assertIn("not affiliated with or endorsed by Microsoft", README)
 
