@@ -4,12 +4,13 @@ PadShift is a destination-first Linux gamepad remapper for Fedora KDE and GNOME.
 
 ## Interface polish in 0.12.0
 
-- Closing the main window now hides PadShift without stopping the remapping worker by default. Launch PadShift again from the application menu to restore the same running instance; choose **Quit** in the main menu to stop remapping and exit. The **Keep running when the window closes** preference restores close-to-exit behaviour when switched off. No tray extension is required.
+- Closing the main window now hides PadShift without stopping the remapping worker by default. Launch PadShift again from the application menu to restore the same running instance; choose **Quit** in the main menu to stop remapping and exit. The **Keep running when the window closes** preference restores close-to-exit behaviour when switched off.
+- While the window is hidden, PadShift shows its icon in the system tray (StatusNotifierItem). Click the icon to reopen the window, or right-click for **Show PadShift**, the current remapping state, and **Quit PadShift**. KDE Plasma shows it natively; GNOME needs the *AppIndicator and KStatusNotifierItem Support* extension. If no tray is available, PadShift works as before and you reopen it from the application menu. Turning off **Keep running when the window closes** removes the tray icon.
 - The controller view uses a bundled transparent, high-detail Xbox One-style product illustration instead of the old hand-drawn schematic. The artwork is installed next to the UI, so it does not depend on network access at runtime.
 - The image and click targets share one aspect-preserving transform. Hovering a target shows a pointer and highlights the corresponding control; triggers, bumpers, face buttons, D-pad directions, stick directions and stick clicks have separate hit zones.
 - If the art is missing or cannot be decoded, the controller area shows an explicit installation error instead of an empty canvas.
 - The About dialog includes the version, release notes, source/support links, MIT license, framework/artwork credits, diagnostic details and a Microsoft trademark disclaimer.
-- Navigation uses a 280 ms horizontal slide. Dialogs use libadwaita's native presentation transitions; the earlier extra opacity layer was removed because it could make dialogs render blank on some graphics backends. Custom mappings slide open with `Gtk.Revealer`, controller target rings fade in, and the selected control pulses gently while learning an input.
+- Motion is tuned to feel responsive: a 180 ms horizontal page slide, 150 ms custom-mappings reveal, 110 ms target-ring fade and a 550 ms learning pulse (the timing constants are at the top of `padshift_gtk.py`). Dialogs use libadwaita's native presentation transitions; the earlier extra opacity layer was removed because it could make dialogs render blank on some graphics backends. Custom mappings slide open with `Gtk.Revealer`, controller target rings fade in, and the selected control pulses gently while learning an input.
 - The Animations preference offers **Follow system**, **Always on**, and **Off**. Follow system respects GTK's motion preference and checks Plasma's configured animation speed when GTK reports animations off. No custom theme stylesheet is injected.
 
 The controller illustration was created specifically for PadShift; it is not copied from a third-party image. Xbox and Xbox One are trademarks of Microsoft Corporation. PadShift is independent and is not affiliated with or endorsed by Microsoft.
@@ -94,6 +95,7 @@ Fully quit and reopen Bottles after changing that permission. Bottles' per-bottl
 
 - **GTK won't start:** run `./install.sh` again, then launch `~/.local/bin/padshift` from a terminal to see the dependency error.
 - **Permission denied for `/dev/uinput`:** log out of KDE and back in once after initial installation, then relaunch the app.
+- **No tray icon:** the icon appears only while the window is hidden and background mode is on. On GNOME install the *AppIndicator and KStatusNotifierItem Support* extension and log out and in once. Without a tray host, reopen PadShift from the application menu.
 - **No physical controller found:** connect it and choose **Scan devices**. Close other remappers if input capture fails.
 - **Mapping times out:** move a stick clearly to its edge or press and release a button. The capture feedback and Activity & diagnostics page show what PadShift received.
 - **A game does not see the virtual controller:** start PadShift before launching the game; fully close and reopen the game; check Steam Input and sandbox permissions if applicable.
@@ -105,11 +107,11 @@ Run the input-engine and UI-structure regression suite from the extracted direct
 
 ```bash
 python3 -m unittest discover -s tests -v
-python3 -m py_compile padshift_gtk.py padshift.py
+python3 -m py_compile padshift_gtk.py padshift_tray.py padshift.py
 bash -n install.sh uninstall.sh
 ```
 
-**Validation note:** the 0.12.0 source passes the full automated suite (68 tests) and the syntax checks above. The GTK UI was also started once under a headless X server (Xvfb) with GTK 4 and libadwaita 1.5 on Ubuntu; the window built and the app kept running. That check had no physical controller, no `/dev/uinput`, and no Fedora/KDE/GNOME session, so remapping, input learning and the visual layout were not exercised. The GTK UI still requires a live Fedora/GTK4/libadwaita check; follow the checklist in `DESIGN-HIG.md` before describing the interface as fully accessibility-verified.
+**Validation note:** the 0.12.0 source passes the full automated suite (72 tests, including the system-tray tests that run over a private D-Bus session) and the syntax checks above. The real GTK app was also run under a headless X server (Xvfb) with GTK 4 and libadwaita 1.5 on Ubuntu against a stand-in tray host: closing the window hid it and kept the app running, the tray icon became active, clicking it restored the window, and the tray menu's Quit exited the app. That check had no physical controller, no `/dev/uinput`, and no Fedora/KDE/GNOME session, so remapping, input learning, the visual layout, animation feel and the tray icon on a real Plasma or GNOME panel were not exercised. The GTK UI still requires a live Fedora/GTK4/libadwaita check; follow the checklist in `DESIGN-HIG.md` before describing the interface as fully accessibility-verified.
 
 ## Uninstall
 

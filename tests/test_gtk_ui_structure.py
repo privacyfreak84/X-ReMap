@@ -82,7 +82,7 @@ class GtkUiStructureTests(unittest.TestCase):
 
     def test_page_navigation_uses_visible_sliding_transition(self):
         self.assertIn("Gtk.StackTransitionType.SLIDE_LEFT_RIGHT", UI_SOURCE)
-        self.assertIn("self.stack.set_transition_duration(280)", UI_SOURCE)
+        self.assertIn("self.stack.set_transition_duration(PAGE_TRANSITION_MS)", UI_SOURCE)
 
     def test_ui_animations_are_explicit_and_motion_aware(self):
         self.assertIn("Adw.TimedAnimation", UI_SOURCE)
@@ -90,7 +90,7 @@ class GtkUiStructureTests(unittest.TestCase):
         self.assertIn("animation.play()", UI_SOURCE)
         self.assertIn("gtk-enable-animations", UI_SOURCE)
         self.assertIn("Gtk.RevealerTransitionType.SLIDE_DOWN", UI_SOURCE)
-        self.assertIn("self.stack.set_transition_duration(280)", UI_SOURCE)
+        self.assertIn("self.stack.set_transition_duration(PAGE_TRANSITION_MS)", UI_SOURCE)
         self.assertNotIn("PropertyAnimationTarget", UI_SOURCE)
         self.assertIn("Follow system", UI_SOURCE)
 
@@ -101,6 +101,33 @@ class GtkUiStructureTests(unittest.TestCase):
         self.assertIn('self.window.set_size_request(420, 320)', UI_SOURCE)
         self.assertIn("self.editor_paned = Gtk.Box", UI_SOURCE)
         self.assertNotIn("self.editor_paned = Gtk.Paned", UI_SOURCE)
+
+    def test_animation_timings_are_short_and_named(self):
+        timings = {name: int(value) for name, value in re.findall(r"^([A-Z_]+_MS) = (\d+)", UI_SOURCE, re.M)}
+        self.assertEqual(set(timings), {"PAGE_TRANSITION_MS", "REVEALER_TRANSITION_MS", "RING_FADE_MS", "PULSE_MS"})
+        # Snappy, but still long enough to be perceived as motion.
+        self.assertTrue(120 <= timings["PAGE_TRANSITION_MS"] <= 200, timings)
+        self.assertTrue(100 <= timings["REVEALER_TRANSITION_MS"] <= 180, timings)
+        self.assertTrue(60 <= timings["RING_FADE_MS"] <= 130, timings)
+        self.assertTrue(400 <= timings["PULSE_MS"] <= 650, timings)
+        for call in ("set_transition_duration(REVEALER_TRANSITION_MS)",
+                     "0.0, 1.0, RING_FADE_MS, target)", "0.0, 1.0, PULSE_MS, target)"):
+            self.assertIn(call, UI_SOURCE)
+        self.assertNotRegex(UI_SOURCE, r"TimedAnimation\.new\([^)]*\b\d{3,}\b")
+
+    def test_tray_icon_is_optional_installed_and_follows_background_mode(self):
+        tree = ast.parse(UI_SOURCE)
+        app = next(node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == "PadShiftGtkApp")
+        methods = {node.name: node for node in app.body if isinstance(node, ast.FunctionDef)}
+        self.assertIn("import padshift_tray", UI_SOURCE)
+        self.assertIn("padshift_tray = None", UI_SOURCE)  # a tray import failure must not stop launch
+        for name in ("_sync_tray", "_tray_show", "_update_tray_state", "_on_shutdown"):
+            self.assertIn(name, methods)
+        self.assertIn("self._sync_tray()", ast.get_source_segment(UI_SOURCE, methods["_on_keep_background_switch"]))
+        self.assertIn("self._sync_tray()", ast.get_source_segment(UI_SOURCE, methods["on_activate"]))
+        self.assertIn("self.tray.stop()", ast.get_source_segment(UI_SOURCE, methods["_on_shutdown"]))
+        self.assertIn('"notify::visible"', ast.get_source_segment(UI_SOURCE, methods["on_activate"]))
+        self.assertIn("padshift_tray.py", INSTALL_SOURCE)
 
     def test_close_hides_the_window_without_stopping_background_remapping(self):
         tree = ast.parse(UI_SOURCE)

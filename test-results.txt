@@ -29,6 +29,12 @@ Static validation:
   bash -n install.sh uninstall.sh
   Result: passed
 
+Tray and animation update (on top of the above):
+  python3 -m unittest discover -s tests -v
+  Result: 72 tests passed (adds animation-timing and tray structure checks, a tray
+  protocol test against a fake StatusNotifierWatcher, and an end-to-end test of the
+  real app under Xvfb: close hides + keeps running, tray click restores, tray Quit exits).
+
 Launch smoke test:
   xvfb-run python3 padshift_gtk.py (Ubuntu 24.04, GTK 4, libadwaita 1.5, python-evdev, tkinter)
   Result: window built, profile loaded, app kept running until stopped.

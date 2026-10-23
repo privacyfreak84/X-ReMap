@@ -31,10 +31,21 @@ except (ImportError, ValueError, RuntimeError) as exc:  # pragma: no cover - dep
 
 import padshift as core
 
+try:
+    import padshift_tray
+except Exception as _tray_exc:  # pragma: no cover - the tray is optional
+    padshift_tray = None
+    print(f"PadShift tray icon unavailable: {_tray_exc}", file=sys.stderr)
+
 APP_VERSION = "0.12.0"
 APP_ID = "io.github.privacyfreak84.PadShift"
 ANIMATION_MODES = ("system", "on", "off")
 ANIMATION_LABELS = ["Follow system", "Always on", "Off"]
+# Motion timings in milliseconds. Kept short so the interface feels responsive.
+PAGE_TRANSITION_MS = 180      # section slide in the content stack
+REVEALER_TRANSITION_MS = 150  # custom-mappings reveal
+RING_FADE_MS = 110            # controller highlight ring fade-in
+PULSE_MS = 550                # one half-cycle of the "listening" pulse
 
 
 
@@ -246,6 +257,8 @@ class PadShiftGtkApp(Adw.Application):
         self.connect("activate", self.on_activate)
         self._quitting = False
         self.window = None
+        self.tray = None
+        self.connect("shutdown", self._on_shutdown)
         self.devices: list[dict] = []
         self.current_device: dict | None = None
         self.settings = core.load_settings_file()
@@ -325,6 +338,8 @@ class PadShiftGtkApp(Adw.Application):
         GLib.timeout_add(350, self.maybe_autostart)
         GLib.timeout_add(1800, self.auto_device_watch)
         self.window.connect("close-request", self.on_close_request)
+        self.window.connect("notify::visible", lambda *_: self._update_tray_state())
+        self._sync_tray()
         self.window.present()
 
     def _build_shell(self):
@@ -387,7 +402,7 @@ class PadShiftGtkApp(Adw.Application):
         # A deliberate horizontal slide makes section changes perceptible while
         # staying within standard GTK Stack transitions and system motion settings.
         self.stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
-        self.stack.set_transition_duration(280)
+        self.stack.set_transition_duration(PAGE_TRANSITION_MS)
         self.stack.set_hexpand(True)
         self.stack.set_vexpand(True)
         self.stack.add_named(self._build_remapper_page(), "remapper")
@@ -471,10 +486,46 @@ class PadShiftGtkApp(Adw.Application):
     def _action_quit(self, *_args):
         # Explicit Quit always exits; the title-bar close button may only hide.
         self._quitting = True
-        if self.window:
+        if self.window is not None and self.window.get_visible():
             self.window.close()
-        else:
-            self.quit()
+            return
+        # A hidden window (running from the tray) never emits close-request.
+        if self.capture_cancel_event:
+            self.capture_cancel_event.set()
+        if self.worker and self.worker.poll() is None:
+            self._send_worker({"cmd": "stop"})
+        self.quit()
+
+    # --- system tray -----------------------------------------------------------
+    def _sync_tray(self):
+        """Show a tray icon while background mode is on; remove it when it is off."""
+        want = bool(self.keep_background) and padshift_tray is not None
+        if want and self.tray is None:
+            tray = padshift_tray.TrayIcon(APP_ID, "PadShift", APP_ID, self._tray_show, self._action_quit)
+            if tray.start():
+                self.tray = tray
+                self._update_tray_state()
+            else:
+                self.log("Tray icon unavailable: could not connect to the session D-Bus.", "warning")
+        elif not want and self.tray is not None:
+            self.tray.stop()
+            self.tray = None
+
+    def _tray_show(self):
+        if self.window is not None:
+            self.window.present()
+
+    def _update_tray_state(self):
+        if self.tray is None or self.window is None:
+            return
+        self.tray.set_window_visible(self.window.get_visible())
+        active = bool(self.worker and self.worker.poll() is None)
+        self.tray.set_status_text("Remapping active" if active else "Remapping stopped")
+
+    def _on_shutdown(self, *_args):
+        if self.tray is not None:
+            self.tray.stop()
+            self.tray = None
 
     def _action_scan(self, *_args):
         self.refresh_devices()
@@ -716,7 +767,7 @@ class PadShiftGtkApp(Adw.Application):
             "<ul>"
             "<li>Controller canvas layout now reserves enough height to remain visible in the adaptive editor.</li>"
             "<li>Controller highlight rings animate on hover/selection and gently pulse while learning an input.</li>"
-            "<li>Closing the main window can leave remapping running in the background; use Quit to stop it.</li>"
+            "<li>Closing the main window can leave remapping running in the background, with a system-tray icon to reopen or quit it.</li>"
             "<li>Custom mappings expand and collapse with a native GTK revealer transition.</li>"
             "<li>Animations can follow the desktop, be explicitly enabled, or be disabled in Preferences.</li>"
             "<li>Dialog presentation uses native libadwaita transitions rather than a second opacity layer.</li>"
@@ -1001,7 +1052,7 @@ class PadShiftGtkApp(Adw.Application):
         # Gtk.Expander changes instantly; Revealer gives this frequently-used section motion.
         self.custom_mappings_revealer = Gtk.Revealer()
         self.custom_mappings_revealer.set_transition_type(Gtk.RevealerTransitionType.SLIDE_DOWN)
-        self.custom_mappings_revealer.set_transition_duration(250)
+        self.custom_mappings_revealer.set_transition_duration(REVEALER_TRANSITION_MS)
         self.custom_mappings_revealer.set_child(mapping_section)
         self.custom_mappings_toggle = Gtk.ToggleButton(label="Show custom mappings")
         self.custom_mappings_toggle.add_css_class("flat")
@@ -1303,6 +1354,7 @@ class PadShiftGtkApp(Adw.Application):
             return
         self.keep_background = switch.get_active()
         self._persist_settings()
+        self._sync_tray()
         if self.keep_background:
             self.set_status(
                 "Closing the window will keep PadShift running in the background. "
@@ -1784,7 +1836,7 @@ class PadShiftGtkApp(Adw.Application):
             except (AttributeError, TypeError):
                 pass
         target = Adw.CallbackAnimationTarget.new(self._on_ring_progress)
-        animation = Adw.TimedAnimation.new(self.map_area, 0.0, 1.0, 180, target)
+        animation = Adw.TimedAnimation.new(self.map_area, 0.0, 1.0, RING_FADE_MS, target)
         animation.set_easing(Adw.Easing.EASE_OUT_CUBIC)
         self._ring_anim = animation
         animation.play()
@@ -1799,7 +1851,7 @@ class PadShiftGtkApp(Adw.Application):
         self._pulse_listening_state = bool(listening)
         if listening and self._animations_enabled() and self._pulse_anim is None:
             target = Adw.CallbackAnimationTarget.new(self._on_pulse_progress)
-            animation = Adw.TimedAnimation.new(self.map_area, 0.0, 1.0, 800, target)
+            animation = Adw.TimedAnimation.new(self.map_area, 0.0, 1.0, PULSE_MS, target)
             animation.set_easing(Adw.Easing.EASE_IN_OUT_CUBIC)
             animation.set_repeat_count(0)
             animation.set_alternate(True)
@@ -2401,6 +2453,8 @@ class PadShiftGtkApp(Adw.Application):
         self._refresh_engine_status()
     def _refresh_engine_status(self):
         active = bool(self.worker and self.worker.poll() is None)
+        if self.tray is not None:
+            self.tray.set_status_text("Remapping active" if active else "Remapping stopped")
         if hasattr(self, "engine_status_label"):
             self.engine_status_label.set_text("Running" if active else "Stopped")
         if hasattr(self, "_engine_activity_row"):
@@ -2551,10 +2605,11 @@ class PadShiftGtkApp(Adw.Application):
             # activation presents this same ApplicationWindow again.
             if self.window:
                 self.window.set_visible(False)
-            self.log(
-                "Window hidden; PadShift is still running. Launch PadShift again from the application menu to reopen it.",
-                "info",
-            )
+            if self.tray is not None and self.tray.registered:
+                how = "Click the tray icon or launch PadShift again from the application menu to reopen it."
+            else:
+                how = "Launch PadShift again from the application menu to reopen it."
+            self.log(f"Window hidden; PadShift is still running. {how}", "info")
             return True
         if self.worker and self.worker.poll() is None:
             self._send_worker({"cmd": "stop"})

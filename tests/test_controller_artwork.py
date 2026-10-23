@@ -92,7 +92,7 @@ class ControllerArtworkTests(unittest.TestCase):
         self.assertIn("dialog.set_license_type(Gtk.License.MIT_X11)", UI)
         self.assertNotIn("Adw.License.MIT_X11", UI)
         self.assertIn("Adw.ToastOverlay()", UI)
-        self.assertIn("set_transition_duration(280)", UI)
+        self.assertIn("set_transition_duration(PAGE_TRANSITION_MS)", UI)
         self.assertIn("Gtk.StackTransitionType.SLIDE_LEFT_RIGHT", UI)
         self.assertIn("dialog.present(self.window)", UI)
         self.assertIn("Adw.get_enable_animations(self.window)", UI)
