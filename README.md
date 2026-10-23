@@ -1,11 +1,15 @@
-# PadShift 0.12.0 · GTK4 + libadwaita
+# PadShift 0.12.1 · GTK4 + libadwaita
 
 PadShift is a destination-first Linux gamepad remapper for Fedora KDE and GNOME. This release refines the GTK interface against the **official GNOME Human Interface Guidelines (HIG)** while retaining the tested evdev/uinput remapping engine.
+
+## 0.12.1 tray visibility fix
+
+- Use the standard `org.freedesktop.StatusNotifierItem-...` service name and keep the tray item `Active` whenever background mode is enabled. Plasma no longer tucks the icon away just because the main window is open.
 
 ## Interface polish in 0.12.0
 
 - Closing the main window now hides PadShift without stopping the remapping worker by default. Launch PadShift again from the application menu to restore the same running instance; choose **Quit** in the main menu to stop remapping and exit. The **Keep running when the window closes** preference restores close-to-exit behaviour when switched off.
-- While the window is hidden, PadShift shows its icon in the system tray (StatusNotifierItem). Click the icon to reopen the window, or right-click for **Show PadShift**, the current remapping state, and **Quit PadShift**. KDE Plasma shows it natively; GNOME needs the *AppIndicator and KStatusNotifierItem Support* extension. If no tray is available, PadShift works as before and you reopen it from the application menu. Turning off **Keep running when the window closes** removes the tray icon.
+- When **Keep running when the window closes** is enabled, PadShift keeps an **Active** StatusNotifierItem in the system tray whether the main window is open or hidden. Click the icon to bring the window forward, or right-click for **Show PadShift**, the current remapping state, and **Quit PadShift**. KDE Plasma supports it natively; GNOME needs the *AppIndicator and KStatusNotifierItem Support* extension. If no tray host is available, reopen PadShift from the application menu. Turning off **Keep running when the window closes** removes the tray icon.
 - The controller view uses a bundled transparent, high-detail Xbox One-style product illustration instead of the old hand-drawn schematic. The artwork is installed next to the UI, so it does not depend on network access at runtime.
 - The image and click targets share one aspect-preserving transform. Hovering a target shows a pointer and highlights the corresponding control; triggers, bumpers, face buttons, D-pad directions, stick directions and stick clicks have separate hit zones.
 - If the art is missing or cannot be decoded, the controller area shows an explicit installation error instead of an empty canvas.
@@ -95,7 +99,7 @@ Fully quit and reopen Bottles after changing that permission. Bottles' per-bottl
 
 - **GTK won't start:** run `./install.sh` again, then launch `~/.local/bin/padshift` from a terminal to see the dependency error.
 - **Permission denied for `/dev/uinput`:** log out of KDE and back in once after initial installation, then relaunch the app.
-- **No tray icon:** the icon appears only while the window is hidden and background mode is on. On GNOME install the *AppIndicator and KStatusNotifierItem Support* extension and log out and in once. Without a tray host, reopen PadShift from the application menu.
+- **No tray icon:** confirm **Keep running when the window closes** is enabled. In Plasma, open System Tray Settings → Entries and check that PadShift is not disabled or set to always hidden. On GNOME install the *AppIndicator and KStatusNotifierItem Support* extension and log out and in once. Without a tray host, reopen PadShift from the application menu.
 - **No physical controller found:** connect it and choose **Scan devices**. Close other remappers if input capture fails.
 - **Mapping times out:** move a stick clearly to its edge or press and release a button. The capture feedback and Activity & diagnostics page show what PadShift received.
 - **A game does not see the virtual controller:** start PadShift before launching the game; fully close and reopen the game; check Steam Input and sandbox permissions if applicable.
