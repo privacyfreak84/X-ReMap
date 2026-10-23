@@ -1,0 +1,20 @@
+PadShift 0.11.3 UI repair validation (historical baseline)
+
+Automated tests:
+  python3 -m unittest discover -s tests -v
+  Result: 67 tests passed
+
+Static validation:
+  python3 -m py_compile padshift_gtk.py padshift.py
+  Result: passed
+  bash -n install.sh uninstall.sh
+  Result: passed
+
+Archive validation:
+  ZIP integrity check performed after packaging.
+
+Runtime limitation:
+  This build container does not have PyGObject/GTK4/libadwaita available, so the GTK GUI could not be launched here. No claim is made that the final interface was visually re-tested in this environment. Perform a real desktop check on Fedora for controller artwork, About dialog, animation preferences, reduced motion, and window-size behaviour.
+
+
+Note: The 67-test result above is the pre-0.12.0 baseline from the supplied archive. The adaptive/background changes add a static regression test and require a fresh test run on Fedora. No new runtime-test result is claimed by this file.
