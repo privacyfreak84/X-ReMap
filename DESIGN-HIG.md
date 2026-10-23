@@ -1,6 +1,6 @@
 # PadShift UI design crosswalk: GNOME Human Interface Guidelines
 
-This document records the UI decisions for PadShift 0.11.3 and distinguishes implementation from testing. The design reference is the official GNOME HIG: <https://developer.gnome.org/hig/>.
+This document records the UI decisions for PadShift 0.12.0 and distinguishes implementation from testing. The design reference is the official GNOME HIG: <https://developer.gnome.org/hig/>.
 
 ## Implemented decisions
 
@@ -8,7 +8,7 @@ This document records the UI decisions for PadShift 0.11.3 and distinguishes imp
 |---|---|---|
 | Platform integration | GTK4 + libadwaita widgets and an `Adw.ApplicationWindow`; no custom CSS theme or custom widget styling | Source inspection; syntax check |
 | Navigation | `Adw.NavigationSplitView`, `Adw.NavigationPage`, `Adw.ToolbarView`, and `Adw.HeaderBar`. The content header relies on libadwaita's native page title/back-button integration when collapsed rather than drawing its own navigation controls | Source inspection; runtime check still required |
-| Adaptive layout | Navigation collapses at 850sp; the controller/inspector split stacks vertically at 1180sp. The default window is 1080×740 and its minimum request is 480×420; the layout must remain usable at 1024×600 | Source inspection; manual size testing still required |
+| Adaptive layout | Navigation collapses at 850sp; the controller/inspector split stacks vertically at 1180sp. The default window is 1080×740 and its minimum request is 420×320; the controller canvas can shrink to 220sp high below its 360sp natural height | Source inspection; manual size testing still required |
 | Familiar controls | `Adw.PreferencesGroup` with action/switch/expander rows; GTK dropdowns and scales; `Adw.PreferencesDialog`; `Adw.AlertDialog` for confirmations | Source inspection; runtime check still required |
 | Feedback | Capture state remains near the control being edited; toasts are for success/error feedback, and detailed events go to Activity & diagnostics | Source inspection; feedback timing still needs user testing |
 | Iconography | Symbolic theme icons for in-app actions; app-specific scalable full-colour and symbolic SVGs installed under `hicolor` using the application ID as the icon name | SVG XML and desktop-entry checks |

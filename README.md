@@ -109,7 +109,7 @@ python3 -m py_compile padshift_gtk.py padshift.py
 bash -n install.sh uninstall.sh
 ```
 
-**Validation note:** the GTK source has been syntax-checked and the engine regression tests are run in the build environment, but that environment does not have GTK4/libadwaita runtime packages available. The UI has therefore not been launched or checked with Orca/GTK Inspector in this environment. Use the checklist in `DESIGN-HIG.md` on a Fedora desktop before describing the interface as fully accessibility-verified.
+**Validation note:** the supplied 0.11.3 archive's historical `test-results.txt` reports 67 passing tests and source syntax checks for that baseline. The 0.12.0 background and compact-layout changes have not yet been re-run through the full test suite in this session. Static regression checks for the new behaviour are included in `tests/test_gtk_ui_structure.py`. The GTK UI still requires a live Fedora/GTK4/libadwaita check; follow the checklist in `DESIGN-HIG.md` before describing the interface as fully accessibility-verified.
 
 ## Uninstall
 
